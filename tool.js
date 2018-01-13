@@ -1,73 +1,98 @@
-// 1. set ammount
-// getTradeAddress() then
-// send set ammount sbd to trade address if in wallet
-
-// 2.
-// claim and rewards from steem
-// checks account over limit e.g 20 sbd
-//  takes 50% for eth
-//  takes 25% for litecoin
-//  takes 25% for steem
-
 const req = require('request');
 const rp = require('request-promise-native');
 const steem = require('steem');
-
+const schedule = require('node-schedule');
 
 const ACCOUNT_NAME = ''
 const ACCOUNT_WIF = ''
-const TRADE_AMOUNT = '0.100 STEEM'
-const MINIMUM_BALANCE = 10
+const TRADE_AMOUNT = '10.000 STEEM'
+const MINIMUM_BALANCE = 0
+const ETH_ADDRESS = '0xe4266B174aF95720F40b658143F9ac45ef1cA15d'
+const tradeHour = 23
+const tradeMinute = 06
+
+const api = steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+
+// EVERY DAY TRANSFER at 10:30am 10SBD TO ETH IF over 20 in account
+
+let scheduledTime = `${tradeMinute} ${tradeHour} * * *`
+let timer = schedule.scheduleJob(scheduledTime, () => {
+    sbdToEth()
+})
+
+// ---------------------------------------------------------
+// DONT EDIT BELOW THIS LINE
+// ---------------------------------------------------------
 
 
-// InitiateTradeModel1 {
-// inputCoinType (string): the type of coin which the user wishes to trade,
-// outputCoinType (string): the type of coin the user wishes to receive as a result of the trade,
-// outputAddress (string): the output address where the converted funds should be sent,
-// outputMemo (string, optional): the memo to be sent with all outputs to this address (on blockchains that support memos),
-// refundAddress (string, optional): the nickname of the refund address where unconverted funds should be sent. Refunds are currently processed manually.,
-// refundMemo (string, optional): the memo to be sent with all outputs to this refund address (on blockchains that support memos),
-// inputAddressType (string, optional): the type of input address to use, either "unique_address" or "shared_address_with_memo". If you do not supply this parameter, the default for the input wallet will be used. Generally, the default will be what want.,
-// sessionToken (string, optional): the token identifying the session. If missing, a new user ID will be created
-// }
+function steemToEth(){
+
+  getCurrentBalance()
+      .then(data => checkAmounts(data, 'steem'))
+      .then(data => {
+          getTradeAddress('steem', 'eth', ETH_ADDRESS).then( data => {
+            let json = JSON.parse(data)
+            sendTransfer(TRADE_AMOUNT, json.inputAddress, json.inputMemo)
+          })
+      })
+      .catch(data => {
+        console.log(data)
+      })
+}
+
+function sbdToEth(){
+  getCurrentBalance()
+      .then(data => checkAmounts(data, 'sbd'))
+      .then(data => {
+          getTradeAddress('sbd', 'eth', ETH_ADDRESS).then( data => {
+            let json = JSON.parse(data)
+            console.log(TRADE_AMOUNT, json.inputAddress, json.inputMemo)
+            // sendTransfer(TRADE_AMOUNT, json.inputAddress, json.inputMemo)
+          })
+      })
+      .catch(data => {
+        console.log(data)
+      })
+}
 
 
+
+
+function checkAmounts(balance, tokenType){
+  return new Promise( (resolve, reject) => {
+      let value = balance[tokenType].split('.')
+      value = parseInt(value[0])
+      console.log(value)
+      if (value >= MINIMUM_BALANCE){
+        resolve(value)
+      } else {
+        reject('NOT ABOVE MUNIMUM ACCOUNT ACCOUNT BALANCE')
+      }
+  });
+}
 
 // Get balance
 function getCurrentBalance(){
     return new Promise( (resolve, reject) => {
-        steem.api.getAccounts([ACCOUNT_NAME], function(err, result) {
+        steem.api.getAccounts([ACCOUNT_NAME], (err, result) => {
             let balance = {
-              'sbd': result[0].sbd_balance,
-              'steem': result[0].balance
+              sbd: result[0].sbd_balance,
+              steem: result[0].balance
             }
             resolve(balance)
         })
     });
 }
 
-// getTradeAddress().then( data => {
-//   console.log(data.inputAddress)
-//   console.log(data.inputMemo)
-// })
-steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
 
-getCurrentBalance().then(data => console.log(data))
-
-// sendSbd(TRADE_AMOUNT, '', 'TEST SEND VIA SCRIPT').then( data => {
-//   console.log(data)
-// })
-
-function getTradeAddress(){
-  // returns
-  // {"inputAddress":"blocktrades","inputMemo":"17a6816b-c303-4aa5-9851-4331b3d19051","inputCoinType":"sbd","outputAddress":"0xe4266B174aF95720F40b658143F9ac45ef1cA15d","outputCoinType":"eth","refundAddress":null,"flatTransactionFeeInInputCoinType":"0.204"}
-  //
+function getTradeAddress(inputType, outputType, outputAddress){
+  //  e.g 'steem', 'eth', ETH_ADDRESS
 
   let data = {
-    'inputCoinType' : 'sbd',
-    'outputCoinType' : 'eth',
-    'outputAddress' : '0xe4266B174aF95720F40b658143F9ac45ef1cA15d',
-    'refundAddress': 'sambillingham',
+    'inputCoinType' : inputType,
+    'outputCoinType' : outputType,
+    'outputAddress' : outputAddress,
+    'refundAddress': ACCOUNT_NAME,
     'refundMemo': 'AUTO TRADE FROM AVG_BOT: REFUND'
     }
 
@@ -78,12 +103,12 @@ function getTradeAddress(){
   })
 }
 
-function sendSbd(amount, to, memo) {
+function sendTransfer(amount, to, memo) {
   return new Promise( (resolve, reject) => {
 
     steem.broadcast.transfer(ACCOUNT_WIF, ACCOUNT_NAME, to, amount, memo, (err, result) => {
       if (err) throw err
-
+      console.log(result)
       resolve(result);
     });
   })
