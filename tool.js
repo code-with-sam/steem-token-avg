@@ -17,6 +17,7 @@ const steem = require('steem');
 const ACCOUNT_NAME = ''
 const ACCOUNT_WIF = ''
 const TRADE_AMOUNT = '0.100 STEEM'
+const MINIMUM_BALANCE = 10
 
 
 // InitiateTradeModel1 {
@@ -30,21 +31,38 @@ const TRADE_AMOUNT = '0.100 STEEM'
 // sessionToken (string, optional): the token identifying the session. If missing, a new user ID will be created
 // }
 
+
+
+// Get balance
+function getCurrentBalance(){
+    return new Promise( (resolve, reject) => {
+        steem.api.getAccounts([ACCOUNT_NAME], function(err, result) {
+            let balance = {
+              'sbd': result[0].sbd_balance,
+              'steem': result[0].balance
+            }
+            resolve(balance)
+        })
+    });
+}
+
 // getTradeAddress().then( data => {
 //   console.log(data.inputAddress)
 //   console.log(data.inputMemo)
 // })
 steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
 
+getCurrentBalance().then(data => console.log(data))
 
-sendSbd(TRADE_AMOUNT, '', 'TEST SEND VIA SCRIPT').then( data => {
-  console.log(data)
-})
+// sendSbd(TRADE_AMOUNT, '', 'TEST SEND VIA SCRIPT').then( data => {
+//   console.log(data)
+// })
 
 function getTradeAddress(){
   // returns
   // {"inputAddress":"blocktrades","inputMemo":"17a6816b-c303-4aa5-9851-4331b3d19051","inputCoinType":"sbd","outputAddress":"0xe4266B174aF95720F40b658143F9ac45ef1cA15d","outputCoinType":"eth","refundAddress":null,"flatTransactionFeeInInputCoinType":"0.204"}
   //
+
   let data = {
     'inputCoinType' : 'sbd',
     'outputCoinType' : 'eth',
