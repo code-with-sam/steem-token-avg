@@ -2,11 +2,11 @@
 
 This tool aims to automatically diversiy your steem and sbd into other tokens using steem js, blocktrades api and node scheduler.
 
-Set daily or weekly schedules that will transfer set ammounts into a different token via blocktrades. For example you may wish to transfer 10 steem backed dollars to litecoin everyday if you have over 10 in your account.
+Set daily or weekly schedules that will transfer set amounts into a different tokens via blocktrades. For example you may wish to transfer 10 steem backed dollars to litecoin everyday if you have over 10sbd in your account.
 
 The example set out in this tool is 'Everyday at 10:30am transfer 10SBD to the equivilent in ETH if there is over 10SBD to send'
 
-All you need to do is fill int he variables provided 
+All you need to do is fill int the variables provided 
 
 ```
 const ACCOUNT_NAME = 'accountname'
