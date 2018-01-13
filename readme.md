@@ -27,3 +27,5 @@ cd steem-token-avg/
 node tool.js
 ```
 Make sure to edit the default settings in tool.js before running or it will error out.
+
+it is recommended to run this script in the background with a tool such as ```forever``` or ```nodemon```
