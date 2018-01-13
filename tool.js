@@ -8,8 +8,8 @@ const ACCOUNT_WIF = ''
 const TRADE_AMOUNT = '10.000 STEEM'
 const MINIMUM_BALANCE = 0
 const ETH_ADDRESS = '0xe4266B174aF95720F40b658143F9ac45ef1cA15d'
-const tradeHour = 23
-const tradeMinute = 06
+const tradeHour = 10
+const tradeMinute = 30
 
 const api = steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
 
