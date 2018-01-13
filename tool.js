@@ -13,6 +13,12 @@ const req = require('request');
 const rp = require('request-promise-native');
 const steem = require('steem');
 
+
+const ACCOUNT_NAME = ''
+const ACCOUNT_WIF = ''
+const TRADE_AMOUNT = '0.100 STEEM'
+
+
 // InitiateTradeModel1 {
 // inputCoinType (string): the type of coin which the user wishes to trade,
 // outputCoinType (string): the type of coin the user wishes to receive as a result of the trade,
@@ -23,20 +29,44 @@ const steem = require('steem');
 // inputAddressType (string, optional): the type of input address to use, either "unique_address" or "shared_address_with_memo". If you do not supply this parameter, the default for the input wallet will be used. Generally, the default will be what want.,
 // sessionToken (string, optional): the token identifying the session. If missing, a new user ID will be created
 // }
-getTradeAddress().then( data => {
+
+// getTradeAddress().then( data => {
+//   console.log(data.inputAddress)
+//   console.log(data.inputMemo)
+// })
+steem.api.setOptions({ url: 'wss://rpc.buildteam.io' });
+
+
+sendSbd(TRADE_AMOUNT, '', 'TEST SEND VIA SCRIPT').then( data => {
   console.log(data)
 })
-function getTradeAddress(){
-  let data = {
-    "inputCoinType" : "sbd",
-    "outputCoinType" : "eth",
-    "outputAddress" : "0xe4266B174aF95720F40b658143F9ac45ef1cA15d"
-    }
 
+function getTradeAddress(){
+  // returns
+  // {"inputAddress":"blocktrades","inputMemo":"17a6816b-c303-4aa5-9851-4331b3d19051","inputCoinType":"sbd","outputAddress":"0xe4266B174aF95720F40b658143F9ac45ef1cA15d","outputCoinType":"eth","refundAddress":null,"flatTransactionFeeInInputCoinType":"0.204"}
+  //
+  let data = {
+    'inputCoinType' : 'sbd',
+    'outputCoinType' : 'eth',
+    'outputAddress' : '0xe4266B174aF95720F40b658143F9ac45ef1cA15d',
+    'refundAddress': 'sambillingham',
+    'refundMemo': 'AUTO TRADE FROM AVG_BOT: REFUND'
+    }
 
   return rp.post( {
     url: 'https://blocktrades.us:443/api/v2/simple-api/initiate-trade/',
     form : data,
     method: 'POST'
+  })
+}
+
+function sendSbd(amount, to, memo) {
+  return new Promise( (resolve, reject) => {
+
+    steem.broadcast.transfer(ACCOUNT_WIF, ACCOUNT_NAME, to, amount, memo, (err, result) => {
+      if (err) throw err
+
+      resolve(result);
+    });
   })
 }
